@@ -3,9 +3,9 @@ package store
 import (
 	"database/sql"
 	"fmt"
-	"github.com/dkhvan-dev/alabs_project/auth-service/internal/users/model"
-	"github.com/dkhvan-dev/alabs_project/common-libraries/errors"
-	"github.com/dkhvan-dev/alabs_project/common-libraries/utils"
+	"github.com/Khvan-Group/auth-service/internal/users/model"
+	"github.com/Khvan-Group/common-library/errors"
+	"github.com/Khvan-Group/common-library/utils"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 	"math"
@@ -49,14 +49,14 @@ func New(db *sql.DB) *UserStore {
 	}
 }
 
-func (s *UserStore) Login(input model.UserLoginRequest) (map[string]any, *errors.Error) {
+func (s *UserStore) Login(input model.UserLoginRequest) (map[string]any, *errors.CustomError) {
 	entity, err := s.GetEntityByLogin(input.Login)
 	if err != nil {
-		return nil, &ErrUserNotFound
+		return nil, ErrUserNotFound
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(entity.Password), []byte(input.Password)); err != nil {
-		return nil, &ErrLoginData
+		return nil, ErrLoginData
 	}
 
 	jwtTokenInfo := generateToken(input.Login, entity.Role.Code)
@@ -113,17 +113,17 @@ func (s *UserStore) FindAll(page, size int, search string) []model.UserView {
 	return response
 }
 
-func (s *UserStore) FindByLogin(login string) (*model.UserView, *errors.Error) {
+func (s *UserStore) FindByLogin(login string) (*model.UserView, *errors.CustomError) {
 	user, err := s.GetEntityByLogin(login)
 
 	if err != nil {
-		return nil, &ErrUserNotFound
+		return nil, ErrUserNotFound
 	}
 
 	return user.ToView(), nil
 }
 
-func (s *UserStore) GetEntityByLogin(login string) (*model.User, *errors.Error) {
+func (s *UserStore) GetEntityByLogin(login string) (*model.User, *errors.CustomError) {
 	var user model.User
 	var role model.Role
 	var roleCode string
@@ -132,7 +132,7 @@ func (s *UserStore) GetEntityByLogin(login string) (*model.User, *errors.Error) 
 	err := row.Scan(&user.Login, &user.Password, &user.Email, &user.FirstName, &user.MiddleName, &user.LastName, &user.Birthdate, &roleCode)
 
 	if err != nil {
-		return nil, &ErrUserNotFound
+		return nil, ErrUserNotFound
 	}
 
 	roleRow := s.db.QueryRow("select * from t_roles where code = $1", roleCode)
@@ -146,10 +146,10 @@ func (s *UserStore) GetEntityByLogin(login string) (*model.User, *errors.Error) 
 	return &user, nil
 }
 
-func (s *UserStore) Create(input model.UserCreate) *errors.Error {
+func (s *UserStore) Create(input model.UserCreate) *errors.CustomError {
 	exists := s.ExistsByLogin(input.Login)
 	if exists {
-		return &ErrUserAlreadyExists
+		return ErrUserAlreadyExists
 	}
 
 	err := validateCreationUser(input)
@@ -167,11 +167,11 @@ func (s *UserStore) Create(input model.UserCreate) *errors.Error {
 	return nil
 }
 
-func (s *UserStore) Update(input model.UserUpdate) *errors.Error {
+func (s *UserStore) Update(input model.UserUpdate) *errors.CustomError {
 	exists := s.ExistsByLogin(input.Login)
 
 	if !exists {
-		return &ErrUserNotFound
+		return ErrUserNotFound
 	}
 
 	_, err := s.db.Exec("update t_users set first_name = $2, middle_name = $3, last_name = $4, birthdate = $5 where login = $1", input.Login, input.FirstName, input.MiddleName, input.LastName, input.Birthdate)
@@ -182,10 +182,10 @@ func (s *UserStore) Update(input model.UserUpdate) *errors.Error {
 	return nil
 }
 
-func (s *UserStore) ChangePassword(input model.UserChangePassword) *errors.Error {
+func (s *UserStore) ChangePassword(input model.UserChangePassword) *errors.CustomError {
 	exists := s.ExistsByLogin(input.Login)
 	if !exists {
-		return &ErrUserNotFound
+		return ErrUserNotFound
 	}
 
 	oldPassword := ""
@@ -193,11 +193,11 @@ func (s *UserStore) ChangePassword(input model.UserChangePassword) *errors.Error
 	row.Scan(&oldPassword)
 
 	if err := bcrypt.CompareHashAndPassword([]byte(oldPassword), []byte(input.OldPassword)); err != nil {
-		return &ErrWrongOldPassword
+		return ErrWrongOldPassword
 	}
 
 	if input.NewPassword != input.RePassword {
-		return &ErrNewPasswordsMatch
+		return ErrNewPasswordsMatch
 	}
 
 	newPassword, err := bcrypt.GenerateFromPassword([]byte(input.NewPassword), bcrypt.DefaultCost)
@@ -213,14 +213,14 @@ func (s *UserStore) ChangePassword(input model.UserChangePassword) *errors.Error
 	return nil
 }
 
-func (s *UserStore) Delete(login string) *errors.Error {
+func (s *UserStore) Delete(login string) *errors.CustomError {
 	if !s.ExistsByLogin(login) {
-		return &ErrUserNotFound
+		return ErrUserNotFound
 	}
 
 	_, err := s.db.Exec("delete from t_users where login = $1", login)
 	if err != nil {
-		return &ErrUserDelete
+		return ErrUserDelete
 	}
 
 	return nil
@@ -234,9 +234,9 @@ func (s *UserStore) ExistsByLogin(login string) bool {
 	return userExists
 }
 
-func (s *UserStore) Logout(login string) *errors.Error {
+func (s *UserStore) Logout(login string) *errors.CustomError {
 	if !s.ExistsByLogin(login) {
-		return &ErrUserNotFound
+		return ErrUserNotFound
 	}
 
 	_, err := s.db.Exec("delete from t_tokens where token = $1 and username = $2", login)
@@ -247,25 +247,25 @@ func (s *UserStore) Logout(login string) *errors.Error {
 	return nil
 }
 
-func validateCreationUser(input model.UserCreate) *errors.Error {
+func validateCreationUser(input model.UserCreate) *errors.CustomError {
 	birthdate, err := time.Parse("2006-01-02", input.Birthdate)
 	if err != nil {
-		return &ErrParsingBirthdate
+		return ErrParsingBirthdate
 	}
 
 	currentTime := time.Now().Format("2006-02-15")
 	currentDate, err := time.Parse("2006-02-15", currentTime)
 
 	if err != nil {
-		return &ErrParsingCurrentDate
+		return ErrParsingCurrentDate
 	}
 
 	if input.Password != input.RePassword {
-		return &ErrPasswordsMatch
+		return ErrPasswordsMatch
 	}
 
 	if birthdate.After(currentDate) {
-		return &ErrInvalidBirthdate
+		return ErrInvalidBirthdate
 	}
 
 	return nil

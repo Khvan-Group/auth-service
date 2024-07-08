@@ -2,7 +2,8 @@ package api
 
 import (
 	"database/sql"
-	"github.com/dkhvan-dev/alabs_project/auth-service/internal/users/service"
+	"github.com/Khvan-Group/auth-service/internal/users/service"
+	"github.com/Khvan-Group/common-library/middlewares"
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"net/http"
@@ -22,15 +23,13 @@ func New(u service.Users, db *sql.DB) *API {
 	}
 }
 
-func (a *API) AddRoutes(r *mux.Router) error {
+func (a *API) AddRoutes(r *mux.Router) {
 	appRouter := r.PathPrefix("/api/v1").Subrouter()
 
 	addUserRoutes(appRouter, a)
 	addAdminRoutes(appRouter, a)
 
 	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
-
-	return nil
 }
 
 func addUserRoutes(r *mux.Router, a *API) {

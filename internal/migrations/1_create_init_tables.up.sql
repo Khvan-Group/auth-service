@@ -1,4 +1,4 @@
-create type role_code as enum ('USER', 'BLOGGER', 'MODERATOR', 'ADMIN');
+create type role_code as enum ('USER', 'MODERATOR', 'ADMIN');
 
 create table if not exists t_roles
 (
@@ -8,7 +8,6 @@ create table if not exists t_roles
 
 insert into t_roles
 values ('USER', 'Пользователь'),
-       ('BLOGGER', 'Блогер'),
        ('MODERATOR', 'Модератор'),
        ('ADMIN', 'Администратор');
 

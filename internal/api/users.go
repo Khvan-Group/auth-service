@@ -2,9 +2,9 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/dkhvan-dev/alabs_project/auth-service/internal/users/model"
-	"github.com/dkhvan-dev/alabs_project/common-libraries/errors"
-	"github.com/dkhvan-dev/alabs_project/common-libraries/utils"
+	"github.com/Khvan-Group/auth-service/internal/users/model"
+	"github.com/Khvan-Group/common-library/errors"
+	"github.com/Khvan-Group/common-library/utils"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"io"
@@ -44,7 +44,7 @@ func (a *API) Login(w http.ResponseWriter, r *http.Request) {
 
 	tokensMap, loginErr := a.users.Service.Login(input)
 	if loginErr != nil {
-		errors.HandleError(w, *loginErr)
+		errors.HandleError(w, loginErr)
 		return
 	}
 
@@ -80,7 +80,7 @@ func (a *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	createErr := a.users.Service.Create(input)
 	if createErr != nil {
-		errors.HandleError(w, *createErr)
+		errors.HandleError(w, createErr)
 		return
 	}
 
@@ -124,7 +124,7 @@ func (a *API) FindUserByLogin(w http.ResponseWriter, r *http.Request) {
 	login := utils.ToString(context.Get(r, "login"))
 	response, findErr := a.users.Service.FindByLogin(login)
 	if findErr != nil {
-		errors.HandleError(w, *findErr)
+		errors.HandleError(w, findErr)
 	}
 
 	data, err := json.Marshal(response)
@@ -162,7 +162,7 @@ func (a *API) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := a.users.Service.Update(input); err != nil {
-		errors.HandleError(w, *err)
+		errors.HandleError(w, err)
 		return
 	}
 
@@ -195,7 +195,7 @@ func (a *API) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := a.users.Service.ChangePassword(input); err != nil {
-		errors.HandleError(w, *err)
+		errors.HandleError(w, err)
 		return
 	}
 
@@ -212,7 +212,7 @@ func (a *API) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	login := mux.Vars(r)["login"]
 
 	if err := a.users.Service.Delete(login); err != nil {
-		errors.HandleError(w, *err)
+		errors.HandleError(w, err)
 		return
 	}
 
@@ -230,7 +230,7 @@ func (a *API) Logout(w http.ResponseWriter, r *http.Request) {
 
 	err := a.users.Service.Logout(login)
 	if err != nil {
-		errors.HandleError(w, *err)
+		errors.HandleError(w, err)
 		return
 	}
 

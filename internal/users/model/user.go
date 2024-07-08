@@ -1,6 +1,6 @@
 package model
 
-import "github.com/dkhvan-dev/alabs_project/auth-service/internal/blogs/model"
+import "github.com/Khvan-Group/auth-service/internal/blogs/model"
 
 type User struct {
 	Login      string  `json:"login"`

@@ -18,4 +18,14 @@ create table if not exists t_blogs
     deleted_at timestamp,
     deleted_by varchar(255) references t_users (login),
     is_deleted boolean               not null default false
-)
+);
+
+create table if not exists t_users_blogs
+(
+    user_login varchar(255) not null references t_users (login),
+    blog_id    bigint       not null references t_blogs (id),
+    likes      boolean      not null default false,
+    favorites  boolean      not null default false
+);
+
+create unique index udx_users_blogs on t_users_blogs (user_login, blog_id);
