@@ -56,7 +56,7 @@ func DeleteUserDependencies(username string, client *resty.Client) *errors.Custo
 }
 
 func deleteBlogsByUser(request *resty.Request, username string) *errors.CustomError {
-	response, err := request.Delete(fmt.Sprintf(BLOG_SERVICE_URL+"/blogs/%s/delete", username))
+	response, err := request.Delete(fmt.Sprintf(BLOG_SERVICE_URL+"/blogs/%s/delete/", username))
 	if err != nil {
 		return errors.NewInternal("Внутренняя ошибка: Возможно сервис блогов недоступен.")
 	}
