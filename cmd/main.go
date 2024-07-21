@@ -1,9 +1,9 @@
 package main
 
 import (
-	"database/sql"
 	_ "github.com/Khvan-Group/auth-service/docs"
 	"github.com/Khvan-Group/auth-service/internal/api"
+	"github.com/Khvan-Group/auth-service/internal/core/rabbitmq"
 	"github.com/Khvan-Group/auth-service/internal/db"
 	"github.com/Khvan-Group/auth-service/internal/users/service"
 	"github.com/Khvan-Group/auth-service/internal/users/store"
@@ -11,6 +11,7 @@ import (
 	"github.com/Khvan-Group/common-library/utils"
 	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/robfig/cron/v3"
@@ -20,9 +21,9 @@ import (
 const SERVER_PORT = "SERVER_PORT"
 
 // @title User Service API
-// @version 1.0
+// @version 1.0.3
 // @description User Service.
-// @host localhost:8080
+// @host localhost:8081
 // @BasePath /api/v1
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
@@ -41,6 +42,9 @@ func start() {
 	if err := godotenv.Load(); err != nil {
 		panic(err)
 	}
+
+	// init RabbitMQ
+	rabbitmq.InitRabbitMQ()
 
 	// init db
 	db.InitDB()
@@ -70,7 +74,7 @@ func start() {
 	logger.Logger.Fatal(http.ListenAndServe(port, r).Error())
 }
 
-func deleteTokens(db *sql.DB) {
+func deleteTokens(db *sqlx.DB) {
 	if _, err := db.Exec("delete from t_tokens where expiration_deadline >= now()"); err != nil {
 		panic(err)
 	}

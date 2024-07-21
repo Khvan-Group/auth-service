@@ -1,64 +1,225 @@
 basePath: /api/v1
 definitions:
-  errors.Error:
+  models.Role:
     properties:
       code:
-        type: integer
-      msg:
+        type: string
+      name:
         type: string
     type: object
-  model.UserLoginRequest:
+  models.UserChangePassword:
+    properties:
+      login:
+        type: string
+      newPassword:
+        type: string
+      oldPassword:
+        type: string
+      rePassword:
+        type: string
+    type: object
+  models.UserChangeRole:
+    properties:
+      login:
+        type: string
+      role:
+        type: string
+    type: object
+  models.UserCreate:
+    properties:
+      birthdate:
+        type: string
+      email:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      login:
+        type: string
+      middleName:
+        type: string
+      password:
+        type: string
+      rePassword:
+        type: string
+    type: object
+  models.UserLoginRequest:
     properties:
       login:
         type: string
       password:
         type: string
     type: object
-host: localhost:8080
+  models.UserUpdate:
+    properties:
+      birthdate:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      login:
+        type: string
+      middleName:
+        type: string
+      updatedBy:
+        type: string
+    type: object
+  models.UserView:
+    properties:
+      birthdate:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      login:
+        type: string
+      middleName:
+        type: string
+      role:
+        $ref: '#/definitions/models.Role'
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+      wallet:
+        $ref: '#/definitions/models.Wallet'
+    type: object
+  models.Wallet:
+    properties:
+      total:
+        type: integer
+      username:
+        type: string
+    type: object
+host: localhost:8081
 info:
   contact: {}
   description: User Service.
   title: User Service API
-  version: "1.0"
+  version: 1.0.3
 paths:
   /admin/users:
     get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Номер страницы
+        in: query
+        name: page
+        type: integer
+      - description: Количество элементов
+        in: query
+        name: size
+        type: integer
+      - description: Поиск по логину/email/firstName/middleName/lastName
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.UserView'
+            type: array
       security:
       - ApiKeyAuth: []
       summary: Получение список всех пользователей
-  /admin/users/{login}:
-    delete:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Новая информация о пользователе
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserUpdate'
       produces:
       - application/json
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Обновить пользователя
+  /admin/users/{login}:
+    delete:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
       security:
       - ApiKeyAuth: []
       summary: Удалить пользователя
     get:
+      consumes:
+      - application/json
       produces:
       - application/json
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/models.UserView'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
       security:
       - ApiKeyAuth: []
       summary: Получение пользователя по логину
+  /admin/users/role:
     put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Новая роль для пользователя
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserChangeRole'
       produces:
       - application/json
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
       security:
       - ApiKeyAuth: []
-      summary: Обновить пользователя
+      summary: Смена роли пользователя
   /auth:
     post:
       consumes:
@@ -70,25 +231,51 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/model.UserLoginRequest'
+          $ref: '#/definitions/models.UserLoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            type: string
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/errors.Error'
+            type: string
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/errors.Error'
+            type: string
       summary: Аутентификация
+  /common/{username}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Логин пользователя
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: boolean
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Существует ли пользователь
   /logout:
     post:
       produces:
@@ -99,8 +286,33 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Выйти из учетной записи
+  /profile:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserView'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Получение профиль текущего пользователя
   /users:
     post:
+      parameters:
+      - description: Информация о пользователе
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserCreate'
       produces:
       - application/json
       responses:
@@ -115,11 +327,28 @@ paths:
       summary: Создание пользователя
   /users/password:
     put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Старый и новый пароли
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserChangePassword'
       produces:
       - application/json
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
       security:
       - ApiKeyAuth: []
       summary: Смена пароля пользователя
