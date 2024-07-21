@@ -22,7 +22,7 @@ func GetWalletByUser(username string, client *resty.Client) (*models.Wallet, *er
 	request := client.R()
 	request.Header.Set(constants.X_IS_INTERNAL_SERVICE, "true")
 
-	response, err := request.Get(WALLET_SERVICE_URL + "/common/" + username)
+	response, err := request.Get(WALLET_SERVICE_URL + "/wallets/" + username)
 	if err != nil {
 		return nil, errors.NewInternal("Внутренняя ошибка: Возможно сервис кошельков не доступен.")
 	}
@@ -69,7 +69,7 @@ func deleteBlogsByUser(request *resty.Request, username string) *errors.CustomEr
 }
 
 func deleteWalletByUser(request *resty.Request, username string) *errors.CustomError {
-	response, err := request.Delete(WALLET_SERVICE_URL + "/common/" + username)
+	response, err := request.Delete(WALLET_SERVICE_URL + "/wallets/" + username)
 	if err != nil {
 		return errors.NewInternal("Внутренняя ошибка: Возможно сервис кошельков недоступен.")
 	}
