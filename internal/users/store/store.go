@@ -1,19 +1,25 @@
 package store
 
 import (
+	internalContext "context"
 	"fmt"
 	"github.com/Khvan-Group/auth-service/internal/clients"
 	wallet "github.com/Khvan-Group/auth-service/internal/common/models"
+	"github.com/Khvan-Group/auth-service/internal/core/minio"
 	"github.com/Khvan-Group/auth-service/internal/core/rabbitmq"
 	"github.com/Khvan-Group/auth-service/internal/db"
 	"github.com/Khvan-Group/auth-service/internal/users/models"
+	"github.com/Khvan-Group/common-library/constants"
 	"github.com/Khvan-Group/common-library/errors"
 	"github.com/Khvan-Group/common-library/utils"
 	"github.com/go-resty/resty/v2"
 	"github.com/golang-jwt/jwt"
 	"github.com/jmoiron/sqlx"
+	minioGo "github.com/minio/minio-go/v7"
 	"golang.org/x/crypto/bcrypt"
 	"math"
+	"mime/multipart"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -141,7 +147,7 @@ func (s *UserStore) GetEntityByLogin(login string) (*models.User, *errors.Custom
 	query := `
 		select u.login, u.created_at, u.updated_at, u.updated_by, u.password, u.email, 
 		       u.first_name, u.middle_name, u.last_name, u.birthdate, 
-		       r.code as "role.code", r.name as "role.name"
+		       r.code as "role.code", r.name as "role.name", u.avatar
 		from t_users u
 			inner join t_roles r on r.code = u.role
 	 	where lower(login) = $1
@@ -285,6 +291,26 @@ func (s *UserStore) ChangeRole(input models.UserChangeRole, currentUser models.J
 	})
 }
 
+func (s *UserStore) ChangeAvatar(file multipart.File, handler *multipart.FileHeader, currentUser models.JwtUser) *errors.CustomError {
+	return db.StartTransaction(func(tx *sqlx.Tx) *errors.CustomError {
+		bucketName := utils.GetEnv(constants.MINIO_BUCKET_AVATARS)
+		fileName := handler.Filename
+		filePath := filepath.Join("file", fileName)
+
+		_, err := tx.Exec("update t_users set avatar = $1 where login = $2", filePath, currentUser.Login)
+		if err != nil {
+			return errors.NewInternal("Failed to save user image.")
+		}
+
+		_, err = minio.MinioClient.PutObject(internalContext.Background(), bucketName, filePath, file, handler.Size, minioGo.PutObjectOptions{ContentType: handler.Header.Get(constants.CONTENT_TYPE)})
+		if err != nil {
+			return errors.NewInternal("Не удалось сохранить файл.")
+		}
+
+		return nil
+	})
+}
+
 func (s *UserStore) Delete(login string) *errors.CustomError {
 	return db.StartTransaction(func(tx *sqlx.Tx) *errors.CustomError {
 		login = strings.ToLower(login)
@@ -397,7 +423,7 @@ func generateToken(username, role string) *JwtToken {
 func buildQuery(search *string) string {
 	query := `
 		select u.login, u.created_at, u.updated_at, u.updated_by, u.email, u.first_name, u.middle_name, 
-		       u.last_name, u.birthdate, r.code as "role.code", r.name as "role.name" 
+		       u.last_name, u.birthdate, r.code as "role.code", r.name as "role.name", u.avatar 
 		from t_users u
 			inner join t_roles r on r.code = u.role
 	`

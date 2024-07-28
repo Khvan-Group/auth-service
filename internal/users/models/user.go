@@ -14,9 +14,7 @@ type User struct {
 	LastName   string  `json:"last_name" db:"last_name"`
 	Birthdate  string  `json:"birthdate" db:"birthdate"`
 	Role       Role    `json:"role" db:"role"`
-	DeletedAt  *string `json:"deleted_at" db:"deleted_at"`
-	DeletedBy  *User   `json:"deleted_by" db:"deleted_by"`
-	IsDeleted  bool    `json:"is_deleted" db:"is_deleted"`
+	Avatar     *string `json:"avatar" db:"avatar"`
 }
 
 type Role struct {
@@ -75,6 +73,7 @@ type UserView struct {
 	LastName   string        `json:"lastName" db:"last_name"`
 	Birthdate  string        `json:"birthdate" db:"birthdate"`
 	Role       Role          `json:"role" db:"role"`
+	Avatar     *string       `json:"avatar" db:"avatar"`
 	Wallet     models.Wallet `json:"wallet"`
 }
 
@@ -102,5 +101,6 @@ func (u *User) ToView() *UserView {
 		LastName:   u.LastName,
 		Birthdate:  u.Birthdate,
 		Role:       u.Role,
+		Avatar:     u.Avatar,
 	}
 }

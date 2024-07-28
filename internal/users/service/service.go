@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/Khvan-Group/auth-service/internal/users/models"
 	"github.com/Khvan-Group/common-library/errors"
+	"mime/multipart"
 )
 
 type UserService interface {
@@ -14,6 +15,7 @@ type UserService interface {
 	Update(input models.UserUpdate) *errors.CustomError
 	ChangePassword(input models.UserChangePassword, currentUser models.JwtUser) *errors.CustomError
 	ChangeRole(input models.UserChangeRole, currentUser models.JwtUser) *errors.CustomError
+	ChangeAvatar(file multipart.File, handler *multipart.FileHeader, currentUser models.JwtUser) *errors.CustomError
 	Delete(login string) *errors.CustomError
 	ExistsByLogin(login string) bool
 	Logout(login string) *errors.CustomError

@@ -40,6 +40,7 @@ func addUserRoutes(r *mux.Router, a *API) {
 	r.Handle("/profile", middlewares.AuthMiddleware(http.HandlerFunc(a.GetMyProfile))).Methods(http.MethodGet)
 	r.HandleFunc("/users", a.CreateUser).Methods(http.MethodPost)
 	r.Handle("/users", middlewares.AuthMiddleware(http.HandlerFunc(a.UpdateUser))).Methods(http.MethodPut)
+	r.Handle("/users/avatar", middlewares.AuthMiddleware(http.HandlerFunc(a.ChangeAvatar))).Methods(http.MethodPut)
 	r.Handle("/users/password", middlewares.AuthMiddleware(http.HandlerFunc(a.ChangePassword))).Methods(http.MethodPut)
 }
 

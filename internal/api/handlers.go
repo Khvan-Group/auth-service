@@ -289,6 +289,38 @@ func (a *API) ChangeRole(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// ChangeAvatar
+// @Summary Смена аватарки пользователя
+// @Accept json
+// @Produce json
+// @Success 200
+// @Failure 400 {string} errors.CustomError
+// @Failure 403 {string} errors.CustomError
+// @Param file body models.UserChangeRole true "Новая роль для пользователя"
+// @Router /users/avatar [put]
+// @Security ApiKeyAuth
+func (a *API) ChangeAvatar(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		errors.HandleError(w, errors.NewBadRequest("Изображение может иметь размер не больше 10МБ."))
+		return
+	}
+
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		errors.HandleError(w, errors.NewInternal("Не удалось загрузить файл."))
+		return
+	}
+
+	defer file.Close()
+
+	if err := a.users.Service.ChangeAvatar(file, handler, getJwtUser(r)); err != nil {
+		errors.HandleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // DeleteUser
 // @Summary Удалить пользователя
 // @Accept json

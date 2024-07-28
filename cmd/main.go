@@ -3,6 +3,7 @@ package main
 import (
 	_ "github.com/Khvan-Group/auth-service/docs"
 	"github.com/Khvan-Group/auth-service/internal/api"
+	"github.com/Khvan-Group/auth-service/internal/core/minio"
 	"github.com/Khvan-Group/auth-service/internal/core/rabbitmq"
 	"github.com/Khvan-Group/auth-service/internal/db"
 	"github.com/Khvan-Group/auth-service/internal/users/service"
@@ -48,6 +49,9 @@ func start() {
 
 	// init db
 	db.InitDB()
+
+	// init MinIo
+	minio.InitMinio()
 
 	// init server
 	port := ":" + utils.GetEnv(SERVER_PORT)
